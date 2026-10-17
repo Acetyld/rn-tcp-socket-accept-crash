@@ -1,0 +1,36 @@
+diff --git a/node_modules/react-native-tcp-socket/ios/TcpSockets.m b/node_modules/react-native-tcp-socket/ios/TcpSockets.m
+--- a/node_modules/react-native-tcp-socket/ios/TcpSockets.m
++++ b/node_modules/react-native-tcp-socket/ios/TcpSockets.m
+@@ -256,7 +256,7 @@
+                        body:@{
+                            @"id" : server.id,
+                            @"connection" : @{
+-                               @"localAddress" : [socket localHost],
++                               @"localAddress" : [socket localHost] ?: @"unknown",
+                                @"localPort" :
+                                    [NSNumber numberWithInt:[socket localPort]],
+                                @"localFamily" : [socket isIPv4] ? @"IPv4"
+@@ -286,6 +286,10 @@
+                   toClient:(NSNumber *)clientID
+             connectionType:(NSString *)connectionType {
+     GCDAsyncSocket *socket = [client getSocket];
++    // Same race as onConnect: a peer that resets before this runs (a port
++    // probe that gives up) leaves the address getters nil, and a nil value in
++    // the dictionary literal throws. Report the connection with a placeholder
++    // address; the close event follows right after.
+ 
+     [self sendEventWithName:connectionType
+                        body:@{
+@@ -293,10 +297,10 @@
+                            @"info" : @{
+                                @"id" : client.id,
+                                @"connection" : @{
+-                                   @"localAddress" : [socket localHost],
++                                   @"localAddress" : [socket localHost] ?: @"unknown",
+                                    @"localPort" : [NSNumber
+                                        numberWithInt:[socket localPort]],
+-                                   @"remoteAddress" : [socket connectedHost],
++                                   @"remoteAddress" : [socket connectedHost] ?: @"unknown",
+                                    @"remotePort" : [NSNumber
+                                        numberWithInt:[socket connectedPort]],
+                                    @"remoteFamily" : [socket isIPv4] ? @"IPv4"
